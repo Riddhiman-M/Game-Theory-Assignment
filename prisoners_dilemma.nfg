@@ -1,0 +1,14 @@
+NFG 1 R "Untitled Strategic Game" { "Player 1" "Player 2" }
+
+{ { "C" "NC" }
+{ "C" "NC" }
+}
+""
+
+{
+{ "" -5, -5 }
+{ "" -10, -1 }
+{ "" -1, -10 }
+{ "" -2, -2 }
+}
+1 2 3 4 
