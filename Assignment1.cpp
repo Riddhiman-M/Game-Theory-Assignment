@@ -209,6 +209,58 @@ vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 }
 
 
+vector<int> PSNE(vector<int> &snum, vector<vector<int>> &u, int n)
+{
+    vector <vector<int>> visited(u.size(), vector<int>(n, 0));
+    vector <int> v;
+
+    int d=1;
+    vector <int> delta(n);
+
+    for(int i=0; i<n; i++)
+    {
+        delta[i] = d;
+        d *= snum[i];
+    }
+
+    for(int i=0; i<u.size(); i++)
+    {
+        for(int j=0; j<n && i<u.size()-delta[j]; j++)
+        {
+            if(visited[i][j] != 0)
+                continue;
+
+            if(u[i][j] >= u[i+delta[j]][j])
+            {
+                visited[i][j] = 1;
+                visited[i+delta[j]][j] = -1;
+            }
+            else
+            {
+                visited[i][j] = -1;
+                visited[i+delta[j]][j] = 1;
+            }
+        }
+    }
+
+    for(int i=0; i<u.size(); i++)
+    {
+        int f = 1;
+        for(int j=0; j<n; j++)
+        {
+            if(visited[i][j] == -1)
+            {
+                f = 0;
+                break;
+            }
+        }
+        if(f == 1)
+            v.push_back(i);
+    }
+
+    return v;
+}
+
 void SDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
 {
     vector <string> store;
@@ -293,6 +345,38 @@ void VWDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &sn
         cout<<"Very weakly dominant strategy equilibrium does not exist\n";
 }
 
+void PSNE_print(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
+{
+    vector <int> eq;
+    eq = PSNE(snum, u, n);
+
+    if(eq.size() == 0)
+        cout<<"No PSNE found!\n";
+    else
+    {
+        cout<<"PSNE equilibrium strategy sets:\n";
+        int d=1;
+        vector <int> delta(n);
+        for(int i=0; i<n; i++)
+        {
+            delta[i] = d;
+            d *= snum[i];
+        }
+
+        int x1;
+        for(int i=0; i<eq.size(); i++)
+        {
+            cout<<i+1<<": \n";
+            for(int j=0; j<n; j++)
+            {
+                x1 = (eq[i]%(delta[j]*snum[j]))/delta[j];
+                cout<<names[j]<<": "<<strats[j][x1]<<"\n";
+            }
+            cout<<"\n";
+        }
+    }
+}
+
 int main()
 {
     int n = 0;
@@ -300,6 +384,7 @@ int main()
     vector<vector<string>> strats;      //Names of strategies
     vector<int> snum;                   //Number of strategies for each player
     vector<vector<int>> u;              //Utilities for each strategy set
+    vector<int> vorder;                 //Order in which utilities appear in nfg file
 
     string myText, str;
     int part = 1;
@@ -388,6 +473,32 @@ int main()
 
             u.push_back(utemp);
         }
+        else if(part == 4 && myText.length()>1)
+        {
+            int ind1, ind2, k;
+            string nm;
+
+            ind1 = 0;
+            ind2 = myText.find(" ");
+            while(ind2 != -1)
+            {
+                nm = myText.substr(ind1, ind2);
+                k = stoi(nm);
+                vorder.push_back(k);
+
+                ind1 = ind2;
+                ind2 = myText.find(" ", ind2+1);
+            }
+        }
+    }
+
+    vector<vector<int>> v(u.size());              //Re-ordered utility matrix
+
+    for(int i=0; i<vorder.size(); i++)
+    {
+        vector<int> v1;
+        v1 = u[i];
+        v[vorder[i]-1] = v1;
     }
 
     for(int i=0; i<n; i++)
@@ -400,12 +511,16 @@ int main()
             cout<<strats[i][j]<<", ";
         cout<<"\n";
     }
+    cout<<"\n";
+
+    for(int i=0; i<vorder.size(); i++)
+        cout<<vorder[i]<<", ";
 
     cout<<"\n";
     for(int i=0; i<u.size(); i++)
     {
         for(int j=0; j<u[i].size(); j++)
-            cout<<u[i][j]<<", ";
+            cout<<v[i][j]<<", ";
         cout<<"\n";
     }
     cout<<"\n";
@@ -413,6 +528,6 @@ int main()
     MyReadFile.close();
 
     //Calling
-    WDS(names, strats, snum, u, n);
+    SDS(names, strats, snum, v, n);
 
     }
