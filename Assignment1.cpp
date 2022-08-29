@@ -37,7 +37,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
                 ind = start + delta;
                 visited[ind] = 1;
 
-                if(u[ind][x] == prev)
+                if(u[ind][x] == u[prev][x])
                     flag = 0;
                 else if(u[ind][x] > u[prev][x])
                 {
@@ -70,21 +70,227 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 
         if(start != 0 && x1 != x2)
             return -1;
+
+        start++;
     }
 
     return x1;
 }
 
+int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
+{
+    int num = -1, ind=0, fl1=0, fl2=0;               //fl1, fl2 check the strictly greater condition in WDS
+    vector <int> ui(snum[x]);                    //Utilities for player x
+    vector <int> visited(u.size(), 0);
+
+    int start = 0, prev = 0, curr = 0, delta=1;
+
+    for(int i=0; i<x; i++)
+        delta *= snum[i];
+
+    while(ind < u.size()-1)
+    {
+        int x1;
+        if(visited[start] == 1)
+        {
+            start++;
+            continue;
+        }
+        visited[start] = 1;
+
+            prev = start;
+
+            for(int i=1; i<snum[x]; i++)
+            {
+                ind = start + delta;
+                visited[ind] = 1;
+
+                if(u[ind][x] > u[prev][x])
+                {
+                    fl1 = 1;
+                    prev = ind;
+                }
+                else if(u[ind][x] == u[prev][x])
+                {
+                    fl1 = 0;
+                }
+            }
+
+        if(fl1 == 1)
+            fl2 = 1;
+
+        x1 = (prev%(delta*snum[x]))/delta;
+
+        if(start == 0)
+            curr = x1;
+        else if(curr != x1)
+            return -1;
+
+        start++;
+    }
+    if(fl2 == -1)
+        return -1;
+
+    return curr;
+}
+
+vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
+{
+    int num = -1, ind=0, x1, x2;                 //x1, x2 store the retrieved strategies with max utility
+    vector <int> ui(snum[x]);                    //Utilities for player x
+    vector <int> visited(u.size(), 0);
+    vector <int> v;
+    vector <int> v2;
+
+    int start = 0, prev = 0, curr = 0, delta=1;
+
+    for(int i=0; i<x; i++)
+        delta *= snum[i];
+
+    while(ind < u.size()-1)
+    {
+        int x1, x2;
+        if(visited[start] == 1)
+        {
+            start++;
+            continue;
+        }
+        visited[start] = 1;
+
+            prev = start;
+            v2.push_back(prev);
+
+            for(int i=1; i<snum[x]; i++)
+            {
+                ind = start + delta;
+                visited[ind] = 1;
+
+                if(u[ind][x] > u[prev][x])
+                {
+                    prev = ind;
+                    v2.clear();
+                    v2.push_back(ind);
+                }
+                else if(u[ind][x] == u[prev][x])
+                    v2.push_back(ind);
+            }
+
+        if(start != 0)
+        for(int i=0; i<v2.size(); i++)
+        {
+            int f = 0;
+            x1 = (v2[i]%(delta*snum[x]))/delta;
+            for(int j=0; j<v.size(); j++)
+            {
+                if(x1 == v[j])
+                {
+                    f = 1;
+                    break;
+                }
+            }
+            if(f == 0)
+            {
+                v.clear();
+                v.push_back(-1);
+                return v;
+            }
+        }
+        else
+        for(int i=0; i<v2.size(); i++)
+        {
+            x1 = (v2[i]%(delta*snum[x]))/delta;
+            v.push_back(v2[i]);
+        }
+
+        start++;
+    }
+
+    return v;
+}
+
+
 void SDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
 {
+    vector <string> store;
+    int cnt=0;
     for(int i=0; i<n; i++)
     {
         int a = SDS_player(snum, u, i);
         if(a == -1)
             cout<<"Strongly Dominant strategy doesn't exist for "<<names[i]<<"\n";
         else
+        {
             cout<<"Strongly Dominant strategy for "<<names[i]<<" is: "<<strats[i][a]<<"\n";
+            store.push_back(strats[i][a]);
+            cnt++;
+        }
     }
+    if(cnt == n)
+    {
+        cout<<"Strongly dominant strategy equilibrium exists and it is:\n";
+        for(int i=0; i<n; i++)
+            cout<<"Player "<<i+1<<": "<<store[i]<<"\n";
+        cout<<"\n";
+    }
+    else
+        cout<<"Strongly dominant strategy equilibrium does not exist\n\n";
+}
+
+void WDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
+{
+    vector <string> store;
+    int cnt=0;
+    for(int i=0; i<n; i++)
+    {
+        int a = WDS_player(snum, u, i);
+        if(a == -1)
+            cout<<"Weakly Dominant strategy doesn't exist for "<<names[i]<<"\n";
+        else
+        {
+            cout<<"Weakly Dominant strategy for "<<names[i]<<" is: "<<strats[i][a]<<"\n";
+            store.push_back(strats[i][a]);
+            cnt++;
+        }
+    }
+    if(cnt == n)
+    {
+        cout<<"Weakly dominant strategy equilibrium exists and it is:\n";
+        for(int i=0; i<n; i++)
+            cout<<names[i]<<": "<<store[i]<<"\n";
+        cout<<"\n";
+    }
+    else
+        cout<<"Weakly dominant strategy equilibrium does not exist\n\n";
+}
+
+void VWDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
+{
+    vector<vector<string>> store(n);
+    vector<int> v;
+    int cnt=0;
+    for(int i=0; i<n; i++)
+    {
+        v = VWDS_player(snum, u, i);
+        if(v[0] == -1)
+            cout<<"Very weakly dominant strategy doesn't exist for "<<names[i]<<"\n";
+        else
+        {
+            cout<<"Very weakly dominant strategy for "<<names[i]<<" is/are: ";
+            for(int j=0; j<v.size(); j++)
+            {
+                cout<<strats[i][v[j]]<<", ";
+                store[i].push_back(strats[i][v[j]]);
+            }
+            cout<<"\n";
+            cnt++;
+        }
+    }
+    if(cnt == n)
+    {
+        cout<<"Very weakly dominant dominant strategy equilibrium exists\n";
+    }
+    else
+        cout<<"Very weakly dominant strategy equilibrium does not exist\n";
 }
 
 int main()
@@ -95,10 +301,13 @@ int main()
     vector<int> snum;                   //Number of strategies for each player
     vector<vector<int>> u;              //Utilities for each strategy set
 
-    string myText;
+    string myText, str;
     int part = 1;
 
-    ifstream MyReadFile("Trial3_3player_2strat.nfg");   //Input .nfg file name here
+    cout<<"Enter filename (with .nfg extension)\n";
+    cin>>str;
+
+    ifstream MyReadFile(str);   //Input .nfg file name here
 
     while (getline(MyReadFile, myText))
     {
@@ -204,6 +413,6 @@ int main()
     MyReadFile.close();
 
     //Calling
-    SDS(names, strats, snum, u, n);
+    WDS(names, strats, snum, u, n);
 
     }
