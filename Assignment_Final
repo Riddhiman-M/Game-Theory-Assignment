@@ -4,8 +4,7 @@ using namespace std;
 
 int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, x1, x2;                 //x1, x2 store the retrieved strategies with max utility
-    vector <int> ui(snum[x]);                    //Utilities for player x
+    int ind=0, x1, x2;                                 //x1, x2 store the retrieved strategies with max utility
     vector <int> visited(u.size(), 0);
 
     int start = 0, prev = 0, flag = 1, curr = 0, delta=1;
@@ -13,6 +12,8 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
     // start stores the row of the utility matrix being compared
     // prev and curr - best utility of player x from different row comparisons (for a fixed set
     // of strategies of other players, what is the max utility player i can get)
+    // delta stores the increments for a particular strategy set of other players for iterating over
+    // all strategy set of player x
 
     for(int i=0; i<x; i++)
         delta *= snum[i];
@@ -80,8 +81,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 
 int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, fl1=0, fl2=0;               //fl1, fl2 check the strictly greater condition in WDS
-    vector <int> ui(snum[x]);                        //Utilities for player x
+    int ind=0, fl1=0, fl2=0;                        //fl1, fl2 check the strictly greater condition in WDS
     vector <int> visited(u.size(), 0);
 
     int start = 0, prev = 0, curr = 0, delta=1;
@@ -98,12 +98,14 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             continue;
         }
         visited[start] = 1;
+        ind = start;
 
             prev = start;
+            fl1 = 1;
 
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] > u[prev][x])
@@ -120,16 +122,15 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
         if(fl1 == 1)
             fl2 = 1;
 
-        x1 = (prev%(delta*snum[x]))/delta;
+        x1 = (prev%(delta*snum[x]))/delta;         // retrieving corresponding strategy from utlity matrix index
 
         if(start == 0)
             curr = x1;
         else if(curr != x1)
             return -1;
 
-        start++;
     }
-    if(fl2 == -1)
+    if(fl2 == 0)                // fl2 stores whether the strictly greater than condition has been met at least once
         return -1;
 
     return curr;
@@ -137,8 +138,7 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 
 vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, x1, x2;                 //x1, x2 store the retrieved strategies with max utility
-    vector <int> ui(snum[x]);                    //Utilities for player x
+    int ind=0, x1, x2;                      //x1, x2 store the retrieved strategies with max utility
     vector <int> visited(u.size(), 0);
     vector <int> v;
     vector <int> v2;
