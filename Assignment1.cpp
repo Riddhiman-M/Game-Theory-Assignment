@@ -4,8 +4,7 @@ using namespace std;
 
 int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, x1, x2;                 //x1, x2 store the retrieved strategies with max utility
-    vector <int> ui(snum[x]);                    //Utilities for player x
+    int ind=0, x1, x2;                                 //x1, x2 store the retrieved strategies with max utility
     vector <int> visited(u.size(), 0);
 
     int start = 0, prev = 0, flag = 1, curr = 0, delta=1;
@@ -13,6 +12,8 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
     // start stores the row of the utility matrix being compared
     // prev and curr - best utility of player x from different row comparisons (for a fixed set
     // of strategies of other players, what is the max utility player i can get)
+    // delta stores the increments for a particular strategy set of other players for iterating over
+    // all strategy set of player x
 
     for(int i=0; i<x; i++)
         delta *= snum[i];
@@ -26,6 +27,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             continue;
         }
         visited[start] = 1;
+        ind = start;
         if(start == 0)
             prev = start;
         else
@@ -34,7 +36,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
         if(start == 0)
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] == u[prev][x])
@@ -48,7 +50,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
         else
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] == curr)
@@ -79,8 +81,7 @@ int SDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 
 int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, fl1=0, fl2=0;               //fl1, fl2 check the strictly greater condition in WDS
-    vector <int> ui(snum[x]);                    //Utilities for player x
+    int ind=0, fl1=0, fl2=0;                        //fl1, fl2 check the strictly greater condition in WDS
     vector <int> visited(u.size(), 0);
 
     int start = 0, prev = 0, curr = 0, delta=1;
@@ -97,12 +98,14 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             continue;
         }
         visited[start] = 1;
+        ind = start;
 
             prev = start;
+            fl1 = 1;
 
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] > u[prev][x])
@@ -119,16 +122,15 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
         if(fl1 == 1)
             fl2 = 1;
 
-        x1 = (prev%(delta*snum[x]))/delta;
+        x1 = (prev%(delta*snum[x]))/delta;         // retrieving corresponding strategy from utlity matrix index
 
         if(start == 0)
             curr = x1;
         else if(curr != x1)
             return -1;
 
-        start++;
     }
-    if(fl2 == -1)
+    if(fl2 == 0)                // fl2 stores whether the strictly greater than condition has been met at least once
         return -1;
 
     return curr;
@@ -136,8 +138,7 @@ int WDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 
 vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
 {
-    int num = -1, ind=0, x1, x2;                 //x1, x2 store the retrieved strategies with max utility
-    vector <int> ui(snum[x]);                    //Utilities for player x
+    int ind=0, x1, x2;                      //x1, x2 store the retrieved strategies with max utility
     vector <int> visited(u.size(), 0);
     vector <int> v;
     vector <int> v2;
@@ -156,13 +157,14 @@ vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             continue;
         }
         visited[start] = 1;
+        ind = start;
 
             prev = start;
             v2.push_back(prev);
 
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] > u[prev][x])
@@ -176,42 +178,51 @@ vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             }
 
         if(start != 0)
-        for(int i=0; i<v2.size(); i++)
         {
-            int f = 0;
-            x1 = (v2[i]%(delta*snum[x]))/delta;
-            for(int j=0; j<v.size(); j++)
+            for(int i=0; i<v.size(); i++)
             {
-                if(x1 == v[j])
+                int f = 0;
+                for(int j=0; j<v2.size(); j++)
                 {
-                    f = 1;
-                    break;
+                    x1 = (v2[j]%(delta*snum[x]))/delta;
+                    if(x1 == v[i])
+                    {
+                        f = 1;
+                        break;
+                    }
                 }
-            }
-            if(f == 0)
-            {
-                v.clear();
-                v.push_back(-1);
-                return v;
+                if(f == 0)
+                {
+                    /*v.clear();
+                    v.push_back(-1);
+                    return v;*/
+                    v.erase(v.begin()+i);
+                    i--;
+                }
             }
         }
         else
-        for(int i=0; i<v2.size(); i++)
         {
-            x1 = (v2[i]%(delta*snum[x]))/delta;
-            v.push_back(v2[i]);
+            for(int i=0; i<v2.size(); i++)
+            {
+                x1 = (v2[i]%(delta*snum[x]))/delta;
+                v.push_back(x1);
+            }
         }
 
+        v2.clear();
         start++;
     }
 
+    if(v.empty())
+        v.push_back(-1);
     return v;
 }
 
 
 vector<int> PSNE(vector<int> &snum, vector<vector<int>> &u, int n)
 {
-    vector <vector<int>> visited(u.size(), vector<int>(n, 0));
+    vector <vector<int>> visited(u.size(), vector<int>(n, 0));  //this will have 1/0/-1 depending on status of comparison
     vector <int> v;
 
     int d=1;
@@ -315,6 +326,21 @@ void WDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snu
         cout<<"Weakly dominant strategy equilibrium does not exist\n\n";
 }
 
+void Print_VWDSE(vector<vector<string>> &v, int k, string str)
+{
+    if(k == v.size())
+    {
+        cout<<str<<"\n";
+        return;
+    }
+
+    for(int i=0; i<v[k].size(); i++)
+    {
+        string s = str + " "+ v[k][i];
+        Print_VWDSE(v, k+1, s);
+    }
+}
+
 void VWDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &snum, vector<vector<int>> &u, int n)
 {
     vector<vector<string>> store(n);
@@ -339,7 +365,10 @@ void VWDS(vector<string> &names, vector<vector<string>> &strats, vector<int> &sn
     }
     if(cnt == n)
     {
+        string str = "";
         cout<<"Very weakly dominant dominant strategy equilibrium exists\n";
+        Print_VWDSE(store, 0, str);
+        cout<<"\n";
     }
     else
         cout<<"Very weakly dominant strategy equilibrium does not exist\n";
@@ -394,6 +423,8 @@ int main()
 
     ifstream MyReadFile(str);   //Input .nfg file name here
 
+
+    // Parsing the .nfg file to retrieve game details
     while (getline(MyReadFile, myText))
     {
         int a = myText.find("{");
@@ -492,7 +523,10 @@ int main()
         }
     }
 
-    vector<vector<int>> v(u.size());              //Re-ordered utility matrix
+    vector<vector<int>> v(u.size());
+
+    // Re-orderinng utility matrix in the form of binary sequence with number of bits = no. of players
+    // and base for each bit = number of strategies of that player (instead of base 2)
 
     for(int i=0; i<vorder.size(); i++)
     {
@@ -501,6 +535,7 @@ int main()
         v[vorder[i]-1] = v1;
     }
 
+    cout<<"Game Details:\n\n";
     for(int i=0; i<n; i++)
         cout<<names[i]<<"\n";
 
@@ -527,7 +562,30 @@ int main()
 
     MyReadFile.close();
 
-    //Calling
-    SDS(names, strats, snum, v, n);
+    //Calling functions
 
+    char c = 'Y';
+
+    while(c == 'Y' || c== 'y')
+    {
+        cout<<"Enter your choice: \n";
+        cout<<"1. SDS/SDSE  2. WDS/WDSE  3. VWDS/VWDSE   4. PSNE\n";
+        int choice;
+        cin>>choice;
+        switch(choice)
+        {
+            case 1: SDS(names, strats, snum, v, n); break;
+
+            case 2: WDS(names, strats, snum, v, n); break;
+
+            case 3: VWDS(names, strats, snum, v, n); break;
+
+            case 4: PSNE_print(names, strats, snum, v, n); break;
+
+            default: cout<<"Invalid input!\n";
+        }
+        cout<<"\nWant to know more?(Y/N)\n";
+        cin>>c;
     }
+
+}
