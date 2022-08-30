@@ -157,13 +157,14 @@ vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             continue;
         }
         visited[start] = 1;
+        ind = start;
 
             prev = start;
             v2.push_back(prev);
 
             for(int i=1; i<snum[x]; i++)
             {
-                ind = start + delta;
+                ind = ind + delta;
                 visited[ind] = 1;
 
                 if(u[ind][x] > u[prev][x])
@@ -177,35 +178,44 @@ vector<int> VWDS_player(vector<int> &snum, vector<vector<int>> &u, int x)
             }
 
         if(start != 0)
-        for(int i=0; i<v2.size(); i++)
         {
-            int f = 0;
-            x1 = (v2[i]%(delta*snum[x]))/delta;
-            for(int j=0; j<v.size(); j++)
+            for(int i=0; i<v.size(); i++)
             {
-                if(x1 == v[j])
+                int f = 0;
+                for(int j=0; j<v2.size(); j++)
                 {
-                    f = 1;
-                    break;
+                    x1 = (v2[j]%(delta*snum[x]))/delta;
+                    if(x1 == v[i])
+                    {
+                        f = 1;
+                        break;
+                    }
                 }
-            }
-            if(f == 0)
-            {
-                v.clear();
-                v.push_back(-1);
-                return v;
+                if(f == 0)
+                {
+                    /*v.clear();
+                    v.push_back(-1);
+                    return v;*/
+                    v.erase(v.begin()+i);
+                    i--;
+                }
             }
         }
         else
-        for(int i=0; i<v2.size(); i++)
         {
-            x1 = (v2[i]%(delta*snum[x]))/delta;
-            v.push_back(v2[i]);
+            for(int i=0; i<v2.size(); i++)
+            {
+                x1 = (v2[i]%(delta*snum[x]))/delta;
+                v.push_back(x1);
+            }
         }
 
+        v2.clear();
         start++;
     }
 
+    if(v.empty())
+        v.push_back(-1);
     return v;
 }
 
@@ -569,7 +579,7 @@ int main()
 
             default: cout<<"Invalid input!\n";
         }
-        cout<<"Want to know more?(Y/N)\n";
+        cout<<"\nWant to know more?(Y/N)\n";
         cin>>c;
     }
 
